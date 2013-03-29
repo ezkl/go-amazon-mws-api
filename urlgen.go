@@ -17,12 +17,12 @@ type AmazonMWSAPI struct {
 	AccessKey     string
 	SecretKey     string
 	Host          string
-        MarketplaceId string
-        SellerId      string
+	MarketplaceId string
+	SellerId      string
 }
 
-func (api AmazonMWSAPI) genSignAndFetch(Operation string, Parameters map[string]string) (string, error) {
-	genUrl, err := GenerateAmazonUrl(api, Operation, Parameters)
+func (api AmazonMWSAPI) genSignAndFetch(Action string, Parameters map[string]string) (string, error) {
+	genUrl, err := GenerateAmazonUrl(api, Action, Parameters)
 	if err != nil {
 		return "", err
 	}
@@ -48,20 +48,21 @@ func (api AmazonMWSAPI) genSignAndFetch(Operation string, Parameters map[string]
 	return string(body), nil
 }
 
-func GenerateAmazonUrl(api AmazonMWSAPI, Operation string, Parameters map[string]string) (finalUrl *url.URL, err error) {
+func GenerateAmazonUrl(api AmazonMWSAPI, Action string, Parameters map[string]string) (finalUrl *url.URL, err error) {
 	result, err := url.Parse(api.Host)
 	if err != nil {
 		return nil, err
 	}
 
 	result.Host = api.Host
-        result.Scheme = "https"
+	result.Scheme = "https"
 	result.Path = "/Products/2011-10-01"
 
 	values := url.Values{}
+	values.Add("Action", Action)
 	values.Add("AWSAccessKeyId", api.AccessKey)
-        values.Add("SignatureVersion", "2")
-        values.Add("SignatureMethod", "HmacSHA256")
+	values.Add("SignatureVersion", "2")
+	values.Add("SignatureMethod", "HmacSHA256")
 	values.Add("Version", "2009-01-01")
 
 	for k, v := range Parameters {
