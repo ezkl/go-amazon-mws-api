@@ -2,6 +2,12 @@
 
 This Amazon MWS API client is based heavily on @DDRBoxman's [go-amazon-product-api](https://github.com/DDRBoxman/go-amazon-product-api).
 
+## Documentation
+
+You can view the auto-generated documentation at [http://godoc.org/github.com/ezkl/go-amazon-mws-api](http://godoc.org/github.com/ezkl/go-amazon-mws-api).
+
+## Usage
+
 ```go
 package main
 
