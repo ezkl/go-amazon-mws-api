@@ -21,7 +21,7 @@ func main() {
 
        asins = []string{"0195019199"}
 
-       result,err := api.GetLowestOfferListingForASIN(asins)
+       result,err := api.GetLowestOfferListingsForASIN(asins)
 
        if (err != nil) {
            fmt.Println(err)
