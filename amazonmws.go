@@ -1,4 +1,4 @@
-//Package amazonmws provides methods for interacting with the Amazon Marketplace Services API
+// amazonmws provides methods for interacting with the Amazon Marketplace Services API.
 package amazonmws
 
 import (
@@ -6,7 +6,7 @@ import (
 )
 
 /*
-GetLowestOfferListingsForASIN takes a list of ASINs and returns the result
+GetLowestOfferListingsForASIN takes a list of ASINs and returns the result.
 */
 func (api AmazonMWSAPI) GetLowestOfferListingsForASIN(items []string) (string, error) {
 	params := make(map[string]string)
@@ -22,7 +22,7 @@ func (api AmazonMWSAPI) GetLowestOfferListingsForASIN(items []string) (string, e
 }
 
 /*
-GetCompetitivePricingForAsin takes a list of ASINs and returns the result
+GetCompetitivePricingForAsin takes a list of ASINs and returns the result.
 */
 func (api AmazonMWSAPI) GetCompetitivePricingForASIN(items []string) (string, error) {
 	params := make(map[string]string)
