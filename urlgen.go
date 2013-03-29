@@ -63,7 +63,7 @@ func GenerateAmazonUrl(api AmazonMWSAPI, Action string, Parameters map[string]st
 	values.Add("AWSAccessKeyId", api.AccessKey)
 	values.Add("SignatureVersion", "2")
 	values.Add("SignatureMethod", "HmacSHA256")
-	values.Add("Version", "2009-01-01")
+	values.Add("Version", "2011-10-01")
 
 	for k, v := range Parameters {
 		values.Set(k, v)
