@@ -5,6 +5,9 @@ import (
 	"fmt"
 )
 
+/*
+GetLowestOfferListingsForASIN takes a list of ASINs and returns the result
+*/
 func (api AmazonMWSAPI) GetLowestOfferListingsForASIN(items []string) (string, error) {
 	params := make(map[string]string)
 
@@ -18,6 +21,9 @@ func (api AmazonMWSAPI) GetLowestOfferListingsForASIN(items []string) (string, e
 	return api.genSignAndFetch("GetLowestOfferListingsForASIN", params)
 }
 
+/*
+GetCompetitivePricingForAsin takes a list of ASINs and returns the result
+*/
 func (api AmazonMWSAPI) GetCompetitivePricingForASIN(items []string) (string, error) {
 	params := make(map[string]string)
 
