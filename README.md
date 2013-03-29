@@ -19,7 +19,7 @@ func main() {
        api.MarketplaceId = "ATVPDKIKX0DER"
        api.SellerId = ""
 
-       asins = []string{"0195019199"}
+       asins := []string{"0195019199"}
 
        result,err := api.GetLowestOfferListingsForASIN(asins)
 
