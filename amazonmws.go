@@ -18,7 +18,7 @@ func (api AmazonMWSAPI) GetLowestOfferListingsForASIN(items []string) (string, e
 
 	params["MarketplaceId"] = string(api.MarketplaceId)
 
-	return api.genSignAndFetch("GetLowestOfferListingsForASIN", params)
+	return api.genSignAndFetch("GetLowestOfferListingsForASIN", "/Products/2011-10-01", params)
 }
 
 /*
@@ -34,5 +34,5 @@ func (api AmazonMWSAPI) GetCompetitivePricingForASIN(items []string) (string, er
 
 	params["MarketplaceId"] = string(api.MarketplaceId)
 
-	return api.genSignAndFetch("GetCompetitivePricingForASIN", params)
+	return api.genSignAndFetch("GetCompetitivePricingForASIN", "/Products/2011-10-01", params)
 }

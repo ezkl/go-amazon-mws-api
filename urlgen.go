@@ -21,8 +21,8 @@ type AmazonMWSAPI struct {
 	SellerId      string
 }
 
-func (api AmazonMWSAPI) genSignAndFetch(Action string, Parameters map[string]string) (string, error) {
-	genUrl, err := GenerateAmazonUrl(api, Action, Parameters)
+func (api AmazonMWSAPI) genSignAndFetch(Action string, ActionPath string, Parameters map[string]string) (string, error) {
+	genUrl, err := GenerateAmazonUrl(api, Action, ActionPath, Parameters)
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +48,7 @@ func (api AmazonMWSAPI) genSignAndFetch(Action string, Parameters map[string]str
 	return string(body), nil
 }
 
-func GenerateAmazonUrl(api AmazonMWSAPI, Action string, Parameters map[string]string) (finalUrl *url.URL, err error) {
+func GenerateAmazonUrl(api AmazonMWSAPI, Action string, ActionPath string, Parameters map[string]string) (finalUrl *url.URL, err error) {
 	result, err := url.Parse(api.Host)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func GenerateAmazonUrl(api AmazonMWSAPI, Action string, Parameters map[string]st
 
 	result.Host = api.Host
 	result.Scheme = "https"
-	result.Path = "/Products/2011-10-01"
+	result.Path = ActionPath
 
 	values := url.Values{}
 	values.Add("Action", Action)
