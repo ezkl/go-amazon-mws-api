@@ -36,3 +36,17 @@ func (api AmazonMWSAPI) GetCompetitivePricingForASIN(items []string) (string, er
 
 	return api.genSignAndFetch("GetCompetitivePricingForASIN", "/Products/2011-10-01", params)
 }
+
+func (api AmazonMWSAPI) GetMatchingProductForId(idType string, idList []string) (string, error) {
+	params := make(map[string]string)
+
+	for k, v := range idList {
+		key := fmt.Sprintf("IdList.Id.%d", (k + 1))
+		params[key] = string(v)
+	}
+
+	params["IdType"] = idType
+	params["MarketplaceId"] = string(api.MarketplaceId)
+
+	return api.genSignAndFetch("GetMatchingProductForId", "/Products/2011-10-01", params)
+}
