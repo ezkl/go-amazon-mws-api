@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"sort"
 	"strings"
 	"time"
 )
@@ -91,11 +90,9 @@ func SignAmazonUrl(origUrl *url.URL, api AmazonMWSAPI) (signedUrl string, err er
 	escapeUrl := strings.Replace(origUrl.RawQuery, ",", "%2C", -1)
 	escapeUrl = strings.Replace(escapeUrl, ":", "%3A", -1)
 
-	params := strings.Split(escapeUrl, "&")
-	sort.Strings(params)
-	sortedParams := strings.Join(params, "&")
+	params := escapeUrl
 
-	toSign := fmt.Sprintf("GET\n%s\n%s\n%s", origUrl.Host, origUrl.Path, sortedParams)
+	toSign := fmt.Sprintf("GET\n%s\n%s\n%s", origUrl.Host, origUrl.Path, params)
 
 	hasher := hmac.New(sha256.New, []byte(api.SecretKey))
 	_, err = hasher.Write([]byte(toSign))
@@ -107,7 +104,7 @@ func SignAmazonUrl(origUrl *url.URL, api AmazonMWSAPI) (signedUrl string, err er
 
 	hash = url.QueryEscape(hash)
 
-	newParams := fmt.Sprintf("%s&Signature=%s", sortedParams, hash)
+	newParams := fmt.Sprintf("%s&Signature=%s", params, hash)
 
 	origUrl.RawQuery = newParams
 
