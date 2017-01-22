@@ -3,6 +3,8 @@ package amazonmws
 
 import (
 	"fmt"
+	"strconv"
+	"log"
 )
 
 /*
@@ -49,4 +51,46 @@ func (api AmazonMWSAPI) GetMatchingProductForId(idType string, idList []string) 
 	params["MarketplaceId"] = string(api.MarketplaceId)
 
 	return api.genSignAndFetch("GetMatchingProductForId", "/Products/2011-10-01", params)
+}
+
+
+/*
+THIS IS OUR SELLZEE PROP STUFF
+ */
+func (api AmazonMWSAPI) GetLowestPricedOffersForASIN(asin string, itemCondition string) (string, error) {
+	params := make(map[string]string)
+
+	params["ASIN"] = asin
+	params["MarketplaceId"] = string(api.MarketplaceId)
+	params["ItemCondition"] = itemCondition
+
+	return api.genSignAndFetch("GetLowestPricedOffersForASIN", "/Products/2011-10-01", params)
+}
+
+
+func (api AmazonMWSAPI) GetMyFeesEstimate(items []string, uuid string, listingPrice float64, shipping float64) (string, error) {
+	params := make(map[string]string)
+
+	listingPriceStr := fmt.Sprintf("%.2f", listingPrice)
+	shippingStr := fmt.Sprintf("%.2f", shipping)
+	log.Println("---- DEBUG ----")
+	log.Println(listingPriceStr)
+	log.Println(shippingStr)
+	log.Println("---- ----")
+	for c := 0; c < len(items); c++ {
+		d := strconv.Itoa(c + 1)
+		asin := items[c]
+		params["FeesEstimateRequestList.FeesEstimateRequest." + d + ".MarketplaceId"] = string(api.MarketplaceId)
+		params["FeesEstimateRequestList.FeesEstimateRequest." + d + ".IdType"] = "ASIN"
+		params["FeesEstimateRequestList.FeesEstimateRequest." + d + ".IdValue"] = asin
+		params["FeesEstimateRequestList.FeesEstimateRequest." + d + ".IsAmazonFulfilled"] = "true"
+		params["FeesEstimateRequestList.FeesEstimateRequest." + d + ".Identifier"] = uuid
+		params["FeesEstimateRequestList.FeesEstimateRequest." + d + ".PriceToEstimateFees.ListingPrice.CurrencyCode"] = "USD"
+		params["FeesEstimateRequestList.FeesEstimateRequest." + d + ".PriceToEstimateFees.ListingPrice.Amount"] = listingPriceStr
+		params["FeesEstimateRequestList.FeesEstimateRequest." + d + ".PriceToEstimateFees.Shipping.CurrencyCode"] = "USD"
+		params["FeesEstimateRequestList.FeesEstimateRequest." + d + ".PriceToEstimateFees.Shipping.Amount"] = shippingStr
+		params["FeesEstimateRequestList.FeesEstimateRequest." + d + ".PriceToEstimateFees.Points.PointsNumber"] = "0"
+	}
+
+	return api.genSignAndFetch("GetMyFeesEstimate", "/Products/2011-10-01", params)
 }
