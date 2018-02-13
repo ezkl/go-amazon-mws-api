@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"sort"
 	"strings"
 	"time"
+	"bitbucket.org/zombiezen/cardcpx/natsort"
 )
 
 type AmazonMWSAPI struct {
@@ -98,7 +98,7 @@ func SignAmazonUrl(origUrl *url.URL, api AmazonMWSAPI) (signedUrl string, err er
 	escapeUrl = strings.Replace(escapeUrl, ":", "%3A", -1)
 
 	params := strings.Split(escapeUrl, "&")
-	sort.Strings(params)
+	natsort.Strings(params)
 	sortedParams := strings.Join(params, "&")
 
 	toSign := fmt.Sprintf("GET\n%s\n%s\n%s", origUrl.Host, origUrl.Path, sortedParams)
