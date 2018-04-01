@@ -8,9 +8,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"sort"
 	"strings"
 	"time"
+	"sort"
+	"bytes"
+	//"bitbucket.org/zombiezen/cardcpx/natsort"
 )
 
 type AmazonMWSAPI struct {
@@ -98,10 +100,28 @@ func SignAmazonUrl(origUrl *url.URL, api AmazonMWSAPI) (signedUrl string, err er
 	escapeUrl = strings.Replace(escapeUrl, ":", "%3A", -1)
 
 	params := strings.Split(escapeUrl, "&")
-	sort.Strings(params)
-	sortedParams := strings.Join(params, "&")
+	paramMap := make(map[string]string)
+	keys := make([]string, len(params))
 
-	toSign := fmt.Sprintf("GET\n%s\n%s\n%s", origUrl.Host, origUrl.Path, sortedParams)
+	for k, v := range params {
+		parts := strings.Split(v, "=")
+		paramMap[parts[0]] = parts[1]
+		keys[k] = parts[0]
+	}
+	sort.Strings(keys)
+
+	sortedParams := make([]string, len(params))
+	for k, _ := range params {
+		var buffer bytes.Buffer
+		buffer.WriteString(keys[k])
+		buffer.WriteString("=")
+		buffer.WriteString(paramMap[keys[k]])
+		sortedParams[k] = buffer.String()
+	}
+
+	stringParams := strings.Join(sortedParams, "&")
+
+	toSign := fmt.Sprintf("GET\n%s\n%s\n%s", origUrl.Host, origUrl.Path, stringParams)
 
 	hasher := hmac.New(sha256.New, []byte(api.SecretKey))
 	_, err = hasher.Write([]byte(toSign))
@@ -113,7 +133,7 @@ func SignAmazonUrl(origUrl *url.URL, api AmazonMWSAPI) (signedUrl string, err er
 
 	hash = url.QueryEscape(hash)
 
-	newParams := fmt.Sprintf("%s&Signature=%s", sortedParams, hash)
+	newParams := fmt.Sprintf("%s&Signature=%s", stringParams, hash)
 
 	origUrl.RawQuery = newParams
 
