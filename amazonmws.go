@@ -2,19 +2,19 @@
 package amazonmws
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	"strconv"
 )
 
 type FeeEstimateRequest struct {
-	IdValue string
+	IdValue             string
 	PriceToEstimateFees float64
-	Currency string
-	MarketplaceId string
-	IdType string
-	Identifier string
-	IsAmazonFulfilled bool
+	Currency            string
+	MarketplaceId       string
+	IdType              string
+	Identifier          string
+	IsAmazonFulfilled   bool
 }
 
 func (f *FeeEstimateRequest) requestString(index int, key string) string {
@@ -58,7 +58,7 @@ func (f *FeeEstimateRequest) toQuery(index int, marketplaceId string) map[string
 	output[f.requestString(index, "Identifier")] = f.Identifier
 
 	var isFba string
-	if (f.IsAmazonFulfilled) {
+	if f.IsAmazonFulfilled {
 		isFba = "1"
 	} else {
 		isFba = "0"
@@ -66,7 +66,7 @@ func (f *FeeEstimateRequest) toQuery(index int, marketplaceId string) map[string
 
 	output[f.requestString(index, "IsAmazonFulfilled")] = isFba
 
-	fmt.Printf("%#v", output);
+	fmt.Printf("%#v", output)
 
 	return output
 }
@@ -120,7 +120,22 @@ func (api AmazonMWSAPI) GetMatchingProductForId(idType string, idList []string) 
 func (api AmazonMWSAPI) GetMyFeesEstimate(isFba bool, items []FeeEstimateRequest) (string, error) {
 	params := make(map[string]string)
 
-	fmt.Println(params);
+	for k, v := range items {
+		key := fmt.Sprintf("FeesEstimateRequestList.FeesEstimateRequest.%d", (k + 1))
+		params[key+".MarketplaceId"] = v.MarketplaceId
+		params[key+".IdType"] = v.IdType
+		params[key+".IdValue"] = v.IdValue
+		params[key+".Identifier"] = v.Identifier
+		params[key+".PriceToEstimateFees.ListingPrice.Amount"] = strconv.FormatFloat(v.PriceToEstimateFees, 'f', 2, 32)
+		params[key+".PriceToEstimateFees.ListingPrice.CurrencyCode"] = v.Currency
 
-	return "", nil
+		// which one should have a priority?
+		if v.IsAmazonFulfilled || isFba {
+			params[key+".IsAmazonFulfilled"] = "true"
+		} else {
+			params[key+".IsAmazonFulfilled"] = "false"
+		}
+	}
+
+	return api.genSignAndFetch("GetMyFeesEstimate", "/Products/2011-10-01", params)
 }
