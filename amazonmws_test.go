@@ -276,3 +276,48 @@ func Test_GetMyFeesEstimateQuery(t *testing.T) {
 		}
 	})
 }
+
+func Test_LiveAPICall(t *testing.T) {
+	estimateItem := &FeeEstimateRequest{
+		IdValue:             "B00X4WHP5E",
+		PriceToEstimateFees: 15.11,
+		Currency:            "USD",
+		Identifier:          "B00X4WHP5E",
+		IdType:              "ASIN",
+		MarketplaceId:       "ATVPDKIKX0DER",
+		IsAmazonFulfilled:   true,
+	}
+
+	lowestOfferItem := &LowestOfferListingsForASIN{
+		ASIN:          "B00X4WHP5E",
+		MarketplaceId: "ATVPDKIKX0DER",
+		ItemCondition: "New",
+	}
+
+	api := AmazonMWSAPI{
+		SellerId:      "",
+		AccessKey:     "",
+		SecretKey:     "",
+		AuthToken:     "",
+		Host:          "mws.amazonservices.com",
+		MarketplaceId: "ATVPDKIKX0DER",
+	}
+
+	t.Run("GetMyFeesEstimate", func(t *testing.T) {
+		string, err := api.GetMyFeesEstimate([]RequestParams{estimateItem})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		fmt.Println(string)
+	})
+
+	t.Run("GetLowestPricedOffersForASIN", func(t *testing.T) {
+		string, err := api.GetLowestPricedOffersForASIN(RequestParams(lowestOfferItem))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		fmt.Println(string)
+	})
+}
