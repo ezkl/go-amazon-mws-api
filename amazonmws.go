@@ -3,36 +3,39 @@ package amazonmws
 
 import (
 	"fmt"
-	"bytes"
+	"log"
 	"strconv"
 )
 
+type RequestParams interface {
+	ToQueryParams() (map[string]string, error)
+	SetPrefixKey(string)
+}
+
 type FeeEstimateRequest struct {
-	IdValue string
+	IdValue             string
 	PriceToEstimateFees float64
-	Currency string
+	Currency            string
+	MarketplaceId       string
+	IdType              string
+	Identifier          string
+	IsAmazonFulfilled   bool
+	prefixKey           string
+}
+
+type LowestOfferListingsForASIN struct {
 	MarketplaceId string
-	IdType string
-	Identifier string
-	IsAmazonFulfilled bool
+	ASIN          string
+	ItemCondition string
 }
 
-func (f *FeeEstimateRequest) requestString(index int, key string) string {
-	var buffer bytes.Buffer
-	buffer.WriteString("FeesEstimateRequestList.FeesEstimateRequest.")
-	buffer.WriteString(strconv.Itoa(index))
-	buffer.WriteString(".")
-	buffer.WriteString(key)
-	return buffer.String()
-}
-
-func (f *FeeEstimateRequest) setDefaults(mid string) {
+func (f *FeeEstimateRequest) setDefaults(marketplaceId string, isFba bool) {
 	if f.Currency == "" {
 		f.Currency = "USD"
 	}
 
 	if f.MarketplaceId == "" {
-		f.MarketplaceId = mid
+		f.MarketplaceId = marketplaceId
 	}
 
 	if f.IdType == "" {
@@ -43,32 +46,58 @@ func (f *FeeEstimateRequest) setDefaults(mid string) {
 		f.Identifier = f.IdValue
 	}
 
-	f.IsAmazonFulfilled = true
+	f.IsAmazonFulfilled = isFba
 }
 
-func (f *FeeEstimateRequest) toQuery(index int, marketplaceId string) map[string]string {
-	output := make(map[string]string)
+func (f *FeeEstimateRequest) SetPrefixKey(key string) {
+	f.prefixKey = key
+}
 
-	f.setDefaults(marketplaceId)
-	output[f.requestString(index, "IdValue")] = f.IdValue
-	output[f.requestString(index, "PriceToEstimateFees.ListingPrice.CurrencyCode")] = f.Currency
-	output[f.requestString(index, "PriceToEstimateFees.ListingPrice.Amount")] = strconv.FormatFloat(f.PriceToEstimateFees, 'f', 2, 32)
-	output[f.requestString(index, "MarketplaceId")] = f.MarketplaceId
-	output[f.requestString(index, "IdType")] = f.IdType
-	output[f.requestString(index, "Identifier")] = f.Identifier
+func (f *FeeEstimateRequest) ToQueryParams() (map[string]string, error) {
+	params := make(map[string]string)
 
-	var isFba string
-	if (f.IsAmazonFulfilled) {
-		isFba = "1"
-	} else {
-		isFba = "0"
+	key := f.prefixKey
+	if key == "" {
+		return nil, fmt.Errorf("this endpoint requires a prefix key, likeFeesEstimateRequestList.FeesEstimateRequest.1")
 	}
 
-	output[f.requestString(index, "IsAmazonFulfilled")] = isFba
+	if f.MarketplaceId == "" {
+		return nil, fmt.Errorf("MarketplaceId cannot be empty")
+	}
 
-	fmt.Printf("%#v", output);
+	if f.IdType == "" {
+		return nil, fmt.Errorf("IdType cannot be empty")
+	}
 
-	return output
+	params[key+".MarketplaceId"] = f.MarketplaceId
+	params[key+".IdType"] = f.IdType
+	params[key+".IdValue"] = f.IdValue
+	params[key+".Identifier"] = f.Identifier
+	params[key+".PriceToEstimateFees.ListingPrice.Amount"] = strconv.FormatFloat(f.PriceToEstimateFees, 'f', 2, 32)
+	params[key+".PriceToEstimateFees.ListingPrice.CurrencyCode"] = f.Currency
+
+	// which one should have a priority?
+	if f.IsAmazonFulfilled {
+		params[key+".IsAmazonFulfilled"] = "true"
+	} else {
+		params[key+".IsAmazonFulfilled"] = "false"
+	}
+
+	return params, nil
+}
+
+func (l *LowestOfferListingsForASIN) ToQueryParams() (map[string]string, error) {
+	params := make(map[string]string, 3)
+
+	params["MarketplaceId"] = l.MarketplaceId
+	params["ASIN"] = l.ASIN
+	params["ItemCondition"] = l.ItemCondition
+
+	return params, nil
+}
+
+func (l *LowestOfferListingsForASIN) SetPrefixKey(key string) {
+	log.Fatalln("Method SetPrefixKey not implemented for struct LowestOfferListingsForASIN")
 }
 
 /*
@@ -117,10 +146,40 @@ func (api AmazonMWSAPI) GetMatchingProductForId(idType string, idList []string) 
 	return api.genSignAndFetch("GetMatchingProductForId", "/Products/2011-10-01", params)
 }
 
-func (api AmazonMWSAPI) GetMyFeesEstimate(isFba bool, items []FeeEstimateRequest) (string, error) {
+func (api AmazonMWSAPI) GetMyFeesEstimate(items []RequestParams) (string, error) {
+	params, err := createPrefixedRequestParams("FeesEstimateRequestList.FeesEstimateRequest.%d", items)
+	if err != nil {
+		return "", err
+	}
+
+	return api.genSignAndFetch("GetMyFeesEstimate", "/Products/2011-10-01", params)
+}
+
+func (api AmazonMWSAPI) GetLowestPricedOffersForASIN(item RequestParams) (string, error) {
+	params, err := item.ToQueryParams()
+	if err != nil {
+		return "", err
+	}
+
+	return api.genSignAndFetch("GetLowestPricedOffersForASIN", "/Products/2011-10-01", params)
+}
+
+func createPrefixedRequestParams(prefix string, items []RequestParams) (map[string]string, error) {
 	params := make(map[string]string)
 
-	fmt.Println(params);
+	for index, item := range items {
+		key := fmt.Sprintf(prefix, (index + 1))
+		item.SetPrefixKey(key)
 
-	return "", nil
+		queryParams, err := item.ToQueryParams()
+		if err != nil {
+			return nil, err
+		}
+
+		for key, param := range queryParams {
+			params[key] = param
+		}
+	}
+
+	return params, nil
 }
