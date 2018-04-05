@@ -120,7 +120,32 @@ func Test_GetLowestPricedOffersForASIN(t *testing.T) {
 }
 
 func Test_GetMyFeesEstimateQuery(t *testing.T) {
-	correctParams := map[string]string{
+	var items []RequestParams
+
+	item1 := &FeeEstimateRequest{
+		IdValue:             "BOOKBOOK12",
+		PriceToEstimateFees: 10.11,
+		Currency:            "USD",
+		Identifier:          "BOOKBOOK12",
+		IdType:              "ASIN",
+		MarketplaceId:       "ATVPDKIKX0DER",
+		IsAmazonFulfilled:   true,
+	}
+
+	item2 := &FeeEstimateRequest{
+		IdValue:             "B00M89QDN4",
+		PriceToEstimateFees: 22.25,
+		Currency:            "USD",
+		Identifier:          "B00M89QDN4",
+		IdType:              "ASIN",
+		MarketplaceId:       "A2EUQ1WTGCTBG2",
+		IsAmazonFulfilled:   false,
+	}
+
+	items = append(items, item1)
+	items = append(items, item2)
+
+	correctParams1 := map[string]string{
 		"FeesEstimateRequestList.FeesEstimateRequest.1.MarketplaceId":                                 "ATVPDKIKX0DER",
 		"FeesEstimateRequestList.FeesEstimateRequest.1.IsAmazonFulfilled":                             "true",
 		"FeesEstimateRequestList.FeesEstimateRequest.1.PriceToEstimateFees.ListingPrice.CurrencyCode": "USD",
@@ -130,7 +155,17 @@ func Test_GetMyFeesEstimateQuery(t *testing.T) {
 		"FeesEstimateRequestList.FeesEstimateRequest.1.IdType":                                        "ASIN",
 	}
 
-	correctKeys := []string{
+	correctParams2 := map[string]string{
+		"FeesEstimateRequestList.FeesEstimateRequest.2.MarketplaceId":                                 "A2EUQ1WTGCTBG2",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.IsAmazonFulfilled":                             "false",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.PriceToEstimateFees.ListingPrice.CurrencyCode": "USD",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.PriceToEstimateFees.ListingPrice.Amount":       "22.25",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.Identifier":                                    "B00M89QDN4",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.IdValue":                                       "B00M89QDN4",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.IdType":                                        "ASIN",
+	}
+
+	correctKeys1 := []string{
 		"FeesEstimateRequestList.FeesEstimateRequest.1.MarketplaceId",
 		"FeesEstimateRequestList.FeesEstimateRequest.1.IsAmazonFulfilled",
 		"FeesEstimateRequestList.FeesEstimateRequest.1.PriceToEstimateFees.ListingPrice.CurrencyCode",
@@ -140,8 +175,18 @@ func Test_GetMyFeesEstimateQuery(t *testing.T) {
 		"FeesEstimateRequestList.FeesEstimateRequest.1.IdType",
 	}
 
+	correctKeys2 := []string{
+		"FeesEstimateRequestList.FeesEstimateRequest.2.MarketplaceId",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.IsAmazonFulfilled",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.PriceToEstimateFees.ListingPrice.CurrencyCode",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.PriceToEstimateFees.ListingPrice.AmountAmount",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.Identifier",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.IdValue",
+		"FeesEstimateRequestList.FeesEstimateRequest.2.IdType",
+	}
+
 	t.Run("Query params with defaults settings", func(t *testing.T) {
-		item := FeeEstimateRequest{
+		item := &FeeEstimateRequest{
 			IdValue:             "BOOKBOOK12",
 			PriceToEstimateFees: 10.11,
 		}
@@ -154,15 +199,15 @@ func Test_GetMyFeesEstimateQuery(t *testing.T) {
 			t.Fatalf("Unexpected error, %s", err.Error())
 		}
 
-		for _, key := range correctKeys {
-			if params[key] != correctParams[key] {
-				t.Fatalf("Expected '%s' key to have value of '%s', but got '%s'", key, correctParams[key], params[key])
+		for _, key := range correctKeys1 {
+			if params[key] != correctParams1[key] {
+				t.Fatalf("Expected '%s' key to have value of '%s', but got '%s'", key, correctParams1[key], params[key])
 			}
 		}
 	})
 
 	t.Run("Query params With explicitly set values", func(t *testing.T) {
-		item := FeeEstimateRequest{
+		item := &FeeEstimateRequest{
 			IdValue:             "BOOKBOOK12",
 			PriceToEstimateFees: 10.11,
 			Currency:            "USD",
@@ -179,10 +224,55 @@ func Test_GetMyFeesEstimateQuery(t *testing.T) {
 			t.Fatalf("Unexpected error, %s", err.Error())
 		}
 
-		for _, key := range correctKeys {
-			if params[key] != correctParams[key] {
-				t.Fatalf("Expected '%s' key to have value of '%s', but got '%s'", key, correctParams[key], params[key])
+		for _, key := range correctKeys1 {
+			if params[key] != correctParams1[key] {
+				t.Fatalf("Expected '%s' key to have value of '%s', but got '%s'", key, correctParams1[key], params[key])
 			}
+		}
+	})
+
+	t.Run("Func createPrefixedRequestParams() works correctly", func(t *testing.T) {
+		params, err := createPrefixedRequestParams("FeesEstimateRequestList.FeesEstimateRequest.%d", items)
+		if err != nil {
+			t.Fatalf("Did not expect error %s", err.Error())
+		}
+
+		for _, key := range correctKeys1 {
+			if params[key] != correctParams1[key] {
+				t.Fatalf("Expected '%s' key to have value of '%s', but got '%s'", key, correctParams1[key], params[key])
+			}
+		}
+
+		for _, key := range correctKeys2 {
+			if params[key] != correctParams2[key] {
+				t.Fatalf("Expected '%s' key to have value of '%s', but got '%s'", key, correctParams2[key], params[key])
+			}
+		}
+	})
+
+	t.Run("Func createPrefixedRequestParams() is being called once inside GetMyFeesEstimate", func(t *testing.T) {
+		var api AmazonMWSAPI
+		called := 0
+		itemsPassed := 0
+
+		createPrefixedRequestParams = func(prefix string, items []RequestParams) (map[string]string, error) {
+			called++
+			itemsPassed = len(items)
+
+			return nil, fmt.Errorf("Method has been called")
+		}
+
+		_, err := api.GetMyFeesEstimate(items)
+		if err.Error() != "Method has been called" {
+			t.Fail()
+		}
+
+		if called != 1 {
+			t.Fatalf("Expected func createPrefixedRequestParams() to have been called 1, instead it was called %d times", called)
+		}
+
+		if itemsPassed != 2 {
+			t.Fatalf("Expected 2 items to have been passed, but got %d", itemsPassed)
 		}
 	})
 }

@@ -164,7 +164,7 @@ func (api AmazonMWSAPI) GetLowestPricedOffersForASIN(item RequestParams) (string
 	return api.genSignAndFetch("GetLowestPricedOffersForASIN", "/Products/2011-10-01", params)
 }
 
-func createPrefixedRequestParams(prefix string, items []RequestParams) (map[string]string, error) {
+var createPrefixedRequestParams = func(prefix string, items []RequestParams) (map[string]string, error) {
 	params := make(map[string]string)
 
 	for index, item := range items {
